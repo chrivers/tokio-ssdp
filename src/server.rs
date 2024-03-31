@@ -276,7 +276,7 @@ impl Server {
         let response = format!(
             concat!(
                 "HTTP/1.1 200 OK\r\n",
-                "CACHE-CONTROL: max-age=100\r\n",
+                "CACHE-CONTROL: max-age={max_age}\r\n",
                 "DATE: {date}\r\n",
                 "EXT:\r\n",
                 "LOCATION: {loc}\r\n",
@@ -286,6 +286,7 @@ impl Server {
                 "{headers}",
                 "\r\n"
             ),
+            max_age = self.max_age,
             date = httpdate::fmt_http_date(SystemTime::now()),
             loc = device.location,
             server = self.server_name.as_deref().unwrap_or(DEFAULT_SERVER_NAME),
@@ -317,7 +318,7 @@ impl Server {
                 concat!(
                     "NOTIFY * HTTP/1.1\r\n",
                     "HOST: {ssdp_addr}:{ssdp_port}\r\n",
-                    "CACHE-CONTROL: max-age=100\r\n",
+                    "CACHE-CONTROL: max-age={max_age}\r\n",
                     "LOCATION: {loc}\r\n",
                     "NT: {st}\r\n",
                     "NTS: ssdp:alive\r\n",
@@ -326,6 +327,7 @@ impl Server {
                     "{headers}",
                     "\r\n"
                 ),
+                max_age = self.max_age,
                 ssdp_addr = SSDP_ADDR,
                 ssdp_port = SSDP_PORT,
                 loc = device.location,
