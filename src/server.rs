@@ -114,9 +114,9 @@ impl Server {
         let extra_headers = Arc::new(
             this.headers
                 .iter()
-                .map(|(name, value)| format!("{}: {}", name, value))
+                .map(|(name, value)| format!("{}: {}\r\n", name, value))
                 .collect::<Vec<_>>()
-                .join("\r\n"),
+                .join("")
         );
 
         let server_fut = async move {
