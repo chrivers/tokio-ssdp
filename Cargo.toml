@@ -4,9 +4,8 @@ version = "0.1.0"
 authors = ["Harry Cheng <chengyuhui1@gmail.com>", "Christian Iversen <ci@iversenit.dk>"]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/chengyuhui/tokio-ssdp"
-homepage = "https://github.com/chengyuhui/tokio-ssdp"
-documentation = "https://docs.rs/tokio-ssdp"
+repository = "https://github.com/chrivers/tokio-ssdp"
+homepage = "https://github.com/chrivers/tokio-ssdp"
 description = """
 A mininal SSDP device implementation using `tokio`.
 """
