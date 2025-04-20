@@ -116,6 +116,7 @@ impl Server {
             s.set_nonblocking(true)?;
             s.bind(&SocketAddr::from((Ipv4Addr::UNSPECIFIED, SSDP_PORT)).into())?;
             s.join_multicast_v4(&SSDP_ADDR, &ip)?;
+            s.set_multicast_loop_v4(true)?;
             s
         };
         let socket = Arc::new(UdpSocket::from_std(s.into())?);
