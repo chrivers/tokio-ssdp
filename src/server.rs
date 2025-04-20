@@ -24,6 +24,7 @@ pub struct Server {
     max_age: u64,
     devices: Vec<Device>,
     headers: Vec<(String, String)>,
+    partial_req_workaround: bool,
 }
 
 impl Server {
@@ -46,6 +47,7 @@ impl Server {
             max_age: 100,
             devices: devices.into_iter().collect(),
             headers: vec![],
+            partial_req_workaround: false,
         }
     }
 
@@ -65,6 +67,16 @@ impl Server {
     /// Set the value of `Cache-Control: max-age=`, which is the valid time for the message, defaults to 100.
     pub fn max_age(mut self, max_age: u64) -> Self {
         self.max_age = max_age;
+        self
+    }
+
+    /// Some broken clients only end the request in `\r\n`, not `\r\n\r\n`.
+    /// This causes [`httparse`] to return [`httparse::Status::Partial`]
+    /// instead of [`httparse::Status::Complete`].
+    ///
+    /// To work with these clients, enable `partial_req_workaround`.
+    pub fn partial_request_workaround(mut self, partial_req_workaround: bool) -> Self {
+        self.partial_req_workaround = partial_req_workaround;
         self
     }
 
@@ -164,7 +176,21 @@ impl Server {
             });
 
             loop {
-                let (n, addr) = socket.recv_from(&mut buf).await?;
+                let (mut n, addr) = socket.recv_from(&mut buf).await?;
+
+                // Some broken clients only end the request in `\r\n`, not `\r\n\r\n`.
+                // If workaround is enabled, fixup these requests so we can parse them.
+                if this.partial_req_workaround {
+                    let slice = &buf[..n];
+                    if slice.ends_with(b"\r\n")
+                        && !slice.ends_with(b"\r\n\r\n")
+                        && (n < buf.len() - 2)
+                    {
+                        buf[n] = b'\r';
+                        buf[n + 1] = b'\n';
+                        n += 2;
+                    }
+                }
 
                 let mut headers = [httparse::EMPTY_HEADER; 16];
                 let mut req = httparse::Request::new(&mut headers);
