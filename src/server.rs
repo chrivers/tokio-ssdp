@@ -114,7 +114,7 @@ impl Server {
             let s = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))?;
             s.set_reuse_address(true)?;
             s.set_nonblocking(true)?;
-            s.bind(&SocketAddr::from((ip, SSDP_PORT)).into())?;
+            s.bind(&SocketAddr::from((Ipv4Addr::UNSPECIFIED, SSDP_PORT)).into())?;
             s.join_multicast_v4(&SSDP_ADDR, &ip)?;
             s
         };
