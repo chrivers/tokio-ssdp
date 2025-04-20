@@ -17,7 +17,7 @@ include = ["Cargo.toml", "LICENSE", "README.md", "src/**/*.rs"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { version = "1", features = ["net", "time"] }
+tokio = { version = "1", features = ["macros", "net", "rt", "sync", "time"] }
 httparse = "1.5.1"
 socket2 = "0.4.1"
 log = "0.4"
