@@ -5,7 +5,7 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-use log::{debug, error, info};
+use log::{debug, error, info, trace};
 use rand::Rng;
 use std::io::Result as IoResult;
 use tokio::{net::UdpSocket, sync::oneshot};
@@ -217,7 +217,7 @@ impl Server {
                                 error!("Handle search failed: {}", e);
                             }
                         }
-                        ("NOTIFY", "*") => debug!("NOTIFY * from {}", addr),
+                        ("NOTIFY", "*") => trace!("NOTIFY * from {}", addr),
                         _ => debug!("Unknown SSDP request {} {} from {}", method, path, addr),
                     }
                 }
@@ -323,7 +323,7 @@ impl Server {
             headers = extra_headers
         );
 
-        debug!("Response: {}", response);
+        trace!("Response: {}", response);
 
         tokio::spawn(async move {
             if mx > 0 {
@@ -372,7 +372,7 @@ impl Server {
                 headers = extra_headers
             );
 
-            debug!("Alive message: {}", message);
+            trace!("Alive message: {}", message);
 
             socket
                 .send_to(message.as_bytes(), (SSDP_ADDR, SSDP_PORT))
@@ -407,7 +407,7 @@ impl Server {
                 headers = extra_headers
             );
 
-            debug!("Byebye message: {}", message);
+            trace!("Byebye message: {}", message);
 
             socket
                 .send_to(message.as_bytes(), (SSDP_ADDR, SSDP_PORT))
