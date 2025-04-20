@@ -1,6 +1,4 @@
-use std::{
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio_ssdp::{Device, Server};
 
 const DEVICE_UUID: &str = "a1ab85e9-e299-4005-a427-f7e49cb1e119";

@@ -116,7 +116,7 @@ impl Server {
                 .iter()
                 .map(|(name, value)| format!("{}: {}\r\n", name, value))
                 .collect::<Vec<_>>()
-                .join("")
+                .join(""),
         );
 
         let server_fut = async move {
