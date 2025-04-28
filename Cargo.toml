@@ -1,6 +1,6 @@
 [package]
 name = "tokio-ssdp"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Harry Cheng <chengyuhui1@gmail.com>", "Christian Iversen <ci@iversenit.dk>"]
 license = "MIT"
 readme = "README.md"
