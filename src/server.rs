@@ -328,7 +328,9 @@ impl Server {
         tokio::spawn(async move {
             if mx > 0 {
                 // upnp specification advises to use a number less than 5 if it is bigger than 5
-                mx = mx.min(5);
+                //
+                // we cap the waiting time at 3, for user convenience
+                mx = mx.min(3);
                 // wait a random time up to mx
                 let wait = {
                     let mut rng = rand::thread_rng();
