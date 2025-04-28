@@ -43,4 +43,17 @@ impl Device {
             location: location.into(),
         }
     }
+
+    /// Create a new SSDP device or service, with precise control over parameters
+    pub fn raw(
+        unique_service_name: impl Into<String>,
+        search_target: impl Into<String>,
+        location: impl Into<String>,
+    ) -> Self {
+        Self {
+            usn: unique_service_name.into(),
+            search_target: search_target.into(),
+            location: location.into(),
+        }
+    }
 }
