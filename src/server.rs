@@ -109,6 +109,7 @@ impl Server {
     /// ```
     pub fn serve_addr(self, ip: Ipv4Addr) -> IoResult<impl Future<Output = IoResult<()>>> {
         let this = Arc::new(self);
+
         let s = {
             use socket2::{Domain, Protocol, Socket, Type};
             let s = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))?;
@@ -119,9 +120,19 @@ impl Server {
             s.set_multicast_loop_v4(true)?;
             s
         };
-        let socket = Arc::new(UdpSocket::from_std(s.into())?);
+        let rx_socket = Arc::new(UdpSocket::from_std(s.into())?);
 
-        info!("Listening on {}", socket.local_addr()?);
+        let s = {
+            use socket2::{Domain, Protocol, Socket, Type};
+            let s = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))?;
+            s.set_nonblocking(true)?;
+            s.bind(&SocketAddr::from((ip, 0)).into())?;
+            s
+        };
+
+        let tx_socket = Arc::new(UdpSocket::from_std(s.into())?);
+
+        info!("Listening on {}", rx_socket.local_addr()?);
 
         // Pre-concat headers
         let extra_headers = Arc::new(
@@ -138,7 +149,7 @@ impl Server {
             let (_notify_alive_tx, mut notify_alive_rx) = oneshot::channel::<()>();
             tokio::spawn({
                 let this = Arc::clone(&this);
-                let socket = Arc::clone(&socket);
+                let socket = Arc::clone(&tx_socket);
                 let extra_headers = Arc::clone(&extra_headers);
 
                 async move {
@@ -164,7 +175,7 @@ impl Server {
             let (_notify_byebye_tx, notify_byebye_rx) = oneshot::channel::<()>();
             tokio::spawn({
                 let this = Arc::clone(&this);
-                let socket = Arc::clone(&socket);
+                let socket = Arc::clone(&tx_socket);
                 let extra_headers = Arc::clone(&extra_headers);
 
                 async move {
@@ -177,7 +188,7 @@ impl Server {
             });
 
             loop {
-                let (mut n, addr) = socket.recv_from(&mut buf).await?;
+                let (mut n, addr) = rx_socket.recv_from(&mut buf).await?;
 
                 // Some broken clients only end the request in `\r\n`, not `\r\n\r\n`.
                 // If workaround is enabled, fixup these requests so we can parse them.
@@ -211,7 +222,7 @@ impl Server {
 
                     match (method, path) {
                         ("M-SEARCH", "*") => {
-                            let socket = Arc::clone(&socket);
+                            let socket = Arc::clone(&tx_socket);
                             let res = this.handle_search(&req, socket, addr, &extra_headers).await;
                             if let Err(e) = res {
                                 error!("Handle search failed: {}", e);
