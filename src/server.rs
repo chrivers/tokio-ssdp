@@ -287,7 +287,7 @@ impl Server {
             ));
         };
 
-        debug!("ST={:?}, MX={:?}", st, mx);
+        trace!("ST={:?}, MX={:?}", st, mx);
 
         let device = if let Some(s) = self
             .devices
@@ -299,7 +299,7 @@ impl Server {
             return Ok(());
         };
 
-        debug!("Matched {:?}", device);
+        trace!("Matched {:?}", device);
 
         let response = format!(
             concat!(
