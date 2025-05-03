@@ -300,41 +300,40 @@ impl Server {
 
         trace!("ST={:?}, MX={:?}", st, mx);
 
-        let device = if let Some(s) = self
-            .devices
-            .iter()
-            .find(|d| d.search_target.eq_ignore_ascii_case(&st))
-        {
-            s
-        } else {
+        let mut responses = vec![];
+
+        for device in &self.devices {
+            if st == "ssdp:all" || device.search_target.eq_ignore_ascii_case(&st) {
+                let response = format!(
+                    concat!(
+                        "HTTP/1.1 200 OK\r\n",
+                        "CACHE-CONTROL: max-age={max_age}\r\n",
+                        "DATE: {date}\r\n",
+                        "EXT:\r\n",
+                        "LOCATION: {loc}\r\n",
+                        "SERVER: {server}\r\n",
+                        "ST: {st}\r\n",
+                        "USN: {usn}\r\n",
+                        "{headers}",
+                        "\r\n"
+                    ),
+                    max_age = self.max_age,
+                    date = httpdate::fmt_http_date(SystemTime::now()),
+                    loc = device.location,
+                    server = self.server_name.as_deref().unwrap_or(DEFAULT_SERVER_NAME),
+                    st = device.search_target,
+                    usn = device.usn,
+                    headers = extra_headers
+                );
+                responses.push(response);
+            }
+        }
+
+        if responses.is_empty() {
             return Ok(());
-        };
+        }
 
-        trace!("Matched {:?}", device);
-
-        let response = format!(
-            concat!(
-                "HTTP/1.1 200 OK\r\n",
-                "CACHE-CONTROL: max-age={max_age}\r\n",
-                "DATE: {date}\r\n",
-                "EXT:\r\n",
-                "LOCATION: {loc}\r\n",
-                "SERVER: {server}\r\n",
-                "ST: {st}\r\n",
-                "USN: {usn}\r\n",
-                "{headers}",
-                "\r\n"
-            ),
-            max_age = self.max_age,
-            date = httpdate::fmt_http_date(SystemTime::now()),
-            loc = device.location,
-            server = self.server_name.as_deref().unwrap_or(DEFAULT_SERVER_NAME),
-            st = device.search_target,
-            usn = device.usn,
-            headers = extra_headers
-        );
-
-        trace!("Response: {}", response);
+        trace!("Responses: {responses:?}");
 
         tokio::spawn(async move {
             if mx > 0 {
@@ -349,8 +348,10 @@ impl Server {
                 };
                 tokio::time::sleep(Duration::from_secs(wait as u64)).await;
             }
-            if let Err(e) = socket.send_to(response.as_bytes(), remote_addr).await {
-                error!("Failed to send search response: {}", e);
+            for response in responses {
+                if let Err(e) = socket.send_to(response.as_bytes(), remote_addr).await {
+                    error!("Failed to send search response: {}", e);
+                }
             }
         });
 
